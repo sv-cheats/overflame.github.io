@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OVERFLAME // ECOSYSTEM</title>
+    
+    <!-- Подключаем Clash Display для лого и Plus Jakarta Sans для интерфейса -->
+    <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-dark: #030305;
+            --bg-card: #08090d;
+            --bg-card-glow: rgba(255, 255, 255, 0.01);
+            --border-line: rgba(255, 255, 255, 0.03);
+            --border-active: rgba(255, 255, 255, 0.08);
+            --accent-green: #00ff66;
+            --text-white: #ffffff;
+            --text-grey: #6b7c96;
+            --font-logo: 'Clash Display', sans-serif;
+            --font-main: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            letter-spacing: -0.01em;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-white);
+            font-family: var(--font-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 0 20px;
+            overflow-x: hidden;
+        }
+
+        .layout {
+            width: 100%;
+            max-width: 1120px;
+            padding: 40px 0 80px 0;
+        }
+
+        /* --- ХЕДЕР: ТОПОВЫЙ СТИЛЬ --- */
+        header {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            border-bottom: 1px solid var(--border-line);
+            padding-bottom: 25px;
+            margin-bottom: 50px;
+        }
+
+        .logo-container { justify-self: start; }
+
+        /* Новый шрифт Clash Display — жирный, технологичный, премиальный */
+        .logo-text {
+            font-family: var(--font-logo);
+            font-size: 1.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            background: linear-gradient(180deg, #ffffff 40%, #555555 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .tabs-container { justify-self: center; }
+
+        .tabs-nav {
+            display: flex;
+            position: relative;
+            background: rgba(255, 255, 255, 0.01);
+            padding: 4px;
+            border-radius: 100px;
+            border: 1px solid var(--border-line);
+        }
+
+        .tab-trigger {
+            font-family: var(--font-main);
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-grey);
+            background: transparent;
+            border: none;
+            padding: 10px 26px;
+            border-radius: 100px;
+            cursor: pointer;
+            transition: color 0.25s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        .tab-trigger:hover { color: var(--text-white); }
+        .tab-trigger.active { color: var(--text-white); }
+
+        /* Ползунок-капля */
+        .sliding-bg {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            height: calc(100% - 8px);
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 100px;
+            z-index: 1;
+            transition: transform 0.45s cubic-bezier(0.6, -0.28, 0.1, 1.35), 
+                        width 0.35s cubic-bezier(0.6, -0.28, 0.1, 1.35);
+        }
+
+        .header-spacer { justify-self: end; }
+
+        /* --- КОНТЕНТ СТРАНИЦ --- */
+        .page-content {
+            display: none;
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        .page-content.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- СЕТКА СТАТИСТИКИ --- */
+        .grid-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-line);
+            border-radius: 14px;
+            padding: 26px 22px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at top left, rgba(255,255,255,0.015), transparent 70%);
+        }
+
+        .stat-num {
+            font-size: 2.4rem;
+            font-weight: 700;
+            color: var(--text-white);
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-grey);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        /* --- ЖИВАЯ ЛЕНТА СОБЫТИЙ (ВМЕСТО СКУЧНЫХ ОТЗЫВОВ) --- */
+        .section-header {
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 20px;
+            color: var(--text-grey);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; box-shadow: 0 0 8px var(--accent-green); }
+            100% { opacity: 0.4; }
+        }
+
+        .activity-feed {
+            background: var(--bg-card);
+            border: 1px solid var(--border-line);
+            border-radius: 14px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .feed-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .feed-user { font-weight: 600; color: var(--text-white); }
+        .feed-action { color: var(--text-grey); margin-left: 6px; }
+        .feed-target { color: #8fa0ba; font-weight: 500; }
+        .feed-time { font-size: 0.75rem; color: var(--text-grey); font-family: monospace; }
+
+        /* --- КРАСИВЫЕ ПЛИТКИ ФУНКЦИЙ (ТАБ 2) --- */
+        .grid-features {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-line);
+            border-radius: 16px;
+            padding: 30px;
+            transition: border-color 0.3s ease, transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            border-color: var(--border-active);
+            transform: translateY(-2px);
+        }
+
+        .feature-card h2 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-white);
+        }
+
+        .feature-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+        }
+
+        .feature-item:last-child { border-bottom: none; }
+        .feature-name { font-size: 0.95rem; color: rgba(255,255,255,0.9); }
+        
+        .status-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 4px 8px;
+            background: rgba(0, 255, 102, 0.06);
+            border: 1px solid rgba(0, 255, 102, 0.15);
+            color: var(--accent-green);
+            border-radius: 4px;
+        }
+
+        /* --- ТАБ 3: BETA PANEL С ГРАФИКОЙ --- */
+        .beta-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .beta-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-line);
+            border-radius: 16px;
+            padding: 30px;
+        }
+
+        .beta-box h2 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        /* Красивый прогресс-бар */
+        .loader-status {
+            margin-top: 15px;
+        }
+        .loader-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-grey);
+            margin-bottom: 8px;
+        }
+        .progress-bar-wrapper {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 100px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+        }
+        .progress-bar-fill {
+            width: 74%;
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #00ff66);
+            border-radius: 100px;
+        }
+
+        /* Лог терминала */
+        .terminal-log {
+            background: #040507;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #8fa0ba;
+            line-height: 1.6;
+        }
+        .terminal-line .cyan { color: #00d2ff; }
+        .terminal-line .green { color: var(--accent-green); }
+
+        @media(max-width: 768px) {
+            header { display: flex; flex-direction: column; gap: 20px; }
+            .grid-stats, .grid-features, .beta-container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="layout">
+        <!-- HEADER -->
+        <header>
+            <div class="logo-container">
+                <div class="logo-text">Overflame</div>
+            </div>
+            
+            <div class="tabs-container">
+                <div class="tabs-nav" id="navBar">
+                    <div class="sliding-bg" id="fluidIndicator"></div>
+                    <button class="tab-trigger active" onclick="switchTab(this, 'main-dashboard')">Dashboard</button>
+                    <button class="tab-trigger" onclick="switchTab(this, 'modules-dashboard')">Features</button>
+                    <button class="tab-trigger" onclick="switchTab(this, 'beta-dashboard')">Beta Panel</button>
+                </div>
+            </div>
+
+            <div class="header-spacer"></div>
+        </header>
+
+        <!-- ТАБ 1: ГЛАВНЫЙ ДАШБОРД (СТАТИСТИКА + ЖИВАЯ ЛЕНТА) -->
+        <main id="main-dashboard" class="page-content active">
+            <div class="grid-stats">
+                <div class="stat-card">
+                    <span class="stat-num" id="stat-total">0</span>
+                    <span class="stat-label">Total Hours</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-num" id="stat-session">0</span>
+                    <span class="stat-label">Session Mins</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-num" id="stat-killed">0</span>
+                    <span class="stat-label">Killed</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-num" id="stat-evaded">0</span>
+                    <span class="stat-label">Evaded</span>
+                </div>
+            </div>
+
+            <!-- ВМЕСТО СКУЧНЫХ РЕВЬЮ: ЖИВАЯ АКТИВНОСТЬ СИСТЕМЫ -->
+            <h2 class="section-header"><span class="live-dot"></span> Live Activity Network</h2>
+            <div class="activity-feed">
+                <div class="feed-item">
+                    <div><span class="feed-user">desync_master</span><span class="feed-action">successfully bypassed</span> <span class="feed-target">anti-cheat matrices</span></div>
+                    <span class="feed-time">just now</span>
+                </div>
+                <div class="feed-item">
+                    <div><span class="feed-user">winesense_user</span><span class="feed-action">synchronized config</span> <span class="feed-target">[alpha_v3.lua]</span></div>
+                    <span class="feed-time">1m ago</span>
+                </div>
+                <div class="feed-item">
+                    <div><span class="feed-user">alpha_coder</span><span class="feed-action">patched defensive hook in</span> <span class="feed-target">Hidden Yaw State</span></div>
+                    <span class="feed-time">4m ago</span>
+                </div>
+            </div>
+        </main>
+
+        <!-- ТАБ 2: КРАСИВЫЕ КАРТОЧКИ ФУНКЦИЙ -->
+        <div id="modules-dashboard" class="page-content">
+            <div class="grid-features">
+                <div class="feature-card">
+                    <h2>Anti-Aimbot Core</h2>
+                    <div class="feature-item"><span class="feature-name">Adaptive Anti-Brute Steps</span><span class="status-badge">active</span></div>
+                    <div class="feature-item"><span class="feature-name">Manual Desync Overrides</span><span class="status-badge">active</span></div>
+                    <div class="feature-item"><span class="feature-name">Fake Lag Limiter Matrix</span><span class="status-badge">active</span></div>
+                    <div class="feature-item"><span class="feature-name">Defensive Hidden Yaw</span><span class="status-badge">active</span></div>
+                </div>
+                <div class="feature-card">
+                    <h2>Visual Overlay & Safety</h2>
+                    <div class="feature-item"><span class="feature-name">LWM Structural Info Boxes</span><span class="status-badge">active</span></div>
+                    <div class="feature-item"><span class="feature-name">XOR Base64 Encryption</span><span class="status-badge">active</span></div>
+                    <div class="feature-item"><span class="feature-name">Automated Event Engine</span><span class="status-badge">active</span></div>
+                    <div class="feature-item"><span class="feature-name">Dynamic Crosshair Overlay</span><span class="status-badge">active</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ТАБ 3: ИНТЕРАКТИВНАЯ BETA PANEL -->
+        <div id="beta-dashboard" class="page-content">
+            <div class="beta-container">
+                <!-- Блок графики состояния загрузчика -->
+                <div class="beta-box">
+                    <h2>Core Memory Status</h2>
+                    <div class="loader-status">
+                        <div class="loader-info"><span>Ecosystem Verification</span><span>74%</span></div>
+                        <div class="progress-bar-wrapper"><div class="progress-bar-fill"></div></div>
+                    </div>
+                    <div class="loader-status" style="margin-top: 25px;">
+                        <div class="loader-info"><span>Cloud Synchronization</span><span>Stable</span></div>
+                        <div class="progress-bar-wrapper"><div class="progress-bar-fill" style="width: 100%; background: var(--accent-green);"></div></div>
+                    </div>
+                </div>
+                
+                <!-- Терминальный Лог -->
+                <div class="beta-box">
+                    <h2>System Terminal Log</h2>
+                    <div class="terminal-log">
+                        <div class="terminal-line"><span class="cyan">[core]</span> Initializing Overflame Engine...</div>
+                        <div class="terminal-line"><span class="cyan">[cloud]</span> Fetching cloud configurations from Realtime DB...</div>
+                        <div class="terminal-line"><span class="green">[success]</span> Handshake verified. Developer Build Active.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- --- JAVASCRIPT --- -->
+    <script>
+        const indicator = document.getElementById('fluidIndicator');
+
+        function moveIndicator(button) {
+            indicator.style.width = `${button.offsetWidth}px`;
+            indicator.style.transform = `translateX(${button.offsetLeft - 4}px)`;
+        }
+
+        function switchTab(button, targetId) {
+            const contents = document.querySelectorAll('.page-content');
+            contents.forEach(item => item.classList.remove('active'));
+
+            const triggers = document.querySelectorAll('.tab-trigger');
+            triggers.forEach(item => item.classList.remove('active'));
+
+            button.classList.add('active');
+            document.getElementById(targetId).classList.add('active');
+            
+            moveIndicator(button);
+        }
+
+        window.addEventListener('load', () => {
+            const activeTab = document.querySelector('.tab-trigger.active');
+            if(activeTab) moveIndicator(activeTab);
+        });
+
+        // --- FIREBASE LIVE SYNC ---
+        const FIREBASE_URL = "https://your-project-id-default-rtdb.firebaseio.com/stats.json";
+
+        function updateUI(data) {
+            if(!data) return;
+            document.getElementById('stat-total').innerText   = data.total_hrs || 0;
+            document.getElementById('stat-session').innerText = data.session_mins || 0;
+            document.getElementById('stat-killed').innerText  = data.killed || 0;
+            document.getElementById('stat-evaded').innerText  = data.evaded || 0;
+        }
+
+        function pullData() {
+            fetch(FIREBASE_URL)
+                .then(res => res.json())
+                .then(data => updateUI(data))
+                .catch(() => {});
+        }
+
+        setInterval(pullData, 2500);
+        pullData();
+    </script>
+</body>
+</html>
