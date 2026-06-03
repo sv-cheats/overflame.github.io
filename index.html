@@ -3,46 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>overflame</title>
+    <title>overflame • premium board system</title>
     
-    <!-- Подключаем Playfair Display для журнальных заголовков/цифр и Plus Jakarta Sans для чистого текста -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,400;1,500;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,300;1,400;1,500&family=Plus+Jakarta+Sans:wght@200;300;400;500;600&family=JetBrains+Mono:wght@200;400&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --bg-dark: #050507; /* Чистый благородный черный со скрина */
-            --border-line: rgba(255, 255, 255, 0.08); /* Очень тонкие, аккуратные линии */
-            --text-white: #ffffff; 
-            --text-grey: #8a8a93; /* Приглушенный серый для описаний */
-            --font-serif: 'Playfair Display', serif; /* Элегантный шрифт с засечками */
-            --font-sans: 'Plus Jakarta Sans', sans-serif; /* Минималистичный базовый шрифт */
+            --bg-base: #050506;
+            --bg-surface: rgba(255, 255, 255, 0.015);
+            --border-weak: rgba(255, 255, 255, 0.04);
+            --border-strong: rgba(255, 255, 255, 0.12);
+            --text-white: #ffffff;
+            --text-grey-light: #b3b3b8;
+            --text-grey-dark: #55555c;
+            --font-serif: 'Playfair Display', serif;
+            --font-sans: 'Plus Jakarta Sans', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
         }
 
         * {
             box-sizing: border-box;
-            letter-spacing: -0.01em;
             margin: 0;
             padding: 0;
+            letter-spacing: -0.02em;
         }
 
         body {
-            background-color: var(--bg-dark);
+            background-color: var(--bg-base);
             color: var(--text-white);
             font-family: var(--font-sans);
             min-height: 100vh;
             display: flex;
-            justify-content: center;
-            padding: 0 24px;
+            flex-direction: column;
+            align-items: center;
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
+            background-image: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.02) 0%, transparent 60%);
         }
 
         .layout {
             width: 100%;
-            max-width: 1050px;
-            padding: 30px 0 100px 0;
+            padding: 40px 60px 100px 60px;
         }
 
         /* --- ХЕДЕР --- */
@@ -50,17 +53,15 @@
             display: grid;
             grid-template-columns: 1fr auto 1fr;
             align-items: center;
+            margin-bottom: 60px;
             padding-bottom: 30px;
-            margin-bottom: 80px;
+            border-bottom: 1px solid var(--border-weak);
         }
 
-        .logo-container { justify-self: start; }
-
-        /* Изящный италик-логотип в стиле evalate */
-        .logo-text {
+        .logo-container .logo-text {
             font-family: var(--font-serif);
             font-size: 1.8rem;
-            font-weight: 500;
+            font-weight: 400;
             font-style: italic;
             text-transform: lowercase;
             color: var(--text-white);
@@ -69,27 +70,27 @@
 
         .tabs-container { justify-self: center; }
 
-        /* СОХРАНЕННЫЙ НАВИГАТОР LIQUID GLASS */
+        /* LIQUID GLASS ТАБЫ */
         .tabs-nav {
             display: flex;
             position: relative;
-            background: rgba(255, 255, 255, 0.02);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            padding: 4px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.005) 100%);
+            backdrop-filter: blur(35px) saturate(150%);
+            -webkit-backdrop-filter: blur(35px) saturate(150%);
+            padding: 5px;
             border-radius: 100px;
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), inset 0 1px 3px rgba(255, 255, 255, 0.12);
         }
 
         .tab-trigger {
             font-family: var(--font-sans);
             font-size: 0.8rem;
             font-weight: 500;
-            color: var(--text-grey);
+            color: var(--text-grey-dark);
             background: transparent;
             border: none;
-            padding: 8px 22px;
+            padding: 12px 28px;
             border-radius: 100px;
             cursor: pointer;
             transition: color 0.3s ease;
@@ -97,167 +98,277 @@
             z-index: 2;
         }
 
-        .tab-trigger:hover { color: var(--text-white); }
+        .tab-trigger:hover { color: var(--text-grey-light); }
         .tab-trigger.active { color: var(--text-white); }
 
         .sliding-bg {
             position: absolute;
-            top: 4px;
-            left: 4px;
-            height: calc(100% - 8px);
-            background: rgba(255, 255, 255, 0.06);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            top: 5px;
+            left: 5px;
+            height: calc(100% - 10px);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.03) 100%);
+            backdrop-filter: blur(20px) contrast(1.15);
+            -webkit-backdrop-filter: blur(20px) contrast(1.15);
             border-radius: 100px;
             z-index: 1;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            transition: transform 0.4s cubic-bezier(0.25, 1, 0.2, 1), width 0.3s cubic-bezier(0.25, 1, 0.2, 1);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .header-spacer { justify-self: end; }
+        .header-spacer { 
+            justify-self: end; 
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
 
-        /* --- КОНТЕНТ (ЭСТЕТИКА СТРАНИЦЫ) --- */
+        /* КНОПКИ */
+        .btn-primary {
+            background: #ffffff;
+            color: #000000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn-primary:hover { opacity: 0.85; }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-white);
+            border: 1px solid var(--border-weak);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-secondary:hover { background: rgba(255, 255, 255, 0.1); }
+
+        /* --- СЕТКА ФОРУМА (ПОЛНЫЙ ЭКРАН) --- */
+        .forum-grid {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 40px;
+            align-items: start;
+        }
+
         .page-content {
             display: none;
-            animation: fadeIn 0.4s cubic-bezier(0.25, 1, 0.2, 1) forwards;
+            animation: stageEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
-
         .page-content.active { display: block; }
 
-        @keyframes fadeIn {
+        @keyframes stageEnter {
             from { opacity: 0; transform: translateY(6px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Главный журнальный заголовок а-ля "the script is the beginning" */
-        .hero-title {
-            font-family: var(--font-serif);
-            font-size: 4.2rem;
-            font-weight: 400;
-            font-style: italic;
-            line-height: 1.1;
-            margin-bottom: 24px;
-            color: var(--text-white);
-        }
-
-        .hero-description {
-            font-size: 0.95rem;
-            font-weight: 300;
-            line-height: 1.6;
-            color: var(--text-grey);
-            max-width: 540px;
-            margin-bottom: 60px;
-        }
-
-        .hero-description strong {
-            color: var(--text-white);
-            font-weight: 500;
-        }
-
-        /* --- МИНИМАЛИСТИЧНАЯ СТАТИСТИКА (КАК НА СКРИНЕ) --- */
-        .grid-stats {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            border-top: 1px solid var(--border-line);
-            padding-top: 30px;
-            gap: 20px;
-            margin-bottom: 60px;
-        }
-
-        .stat-card {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        /* Цифры теперь тоже изящный италик */
-        .stat-num {
-            font-family: var(--font-serif);
-            font-size: 2.6rem;
-            font-style: italic;
-            color: var(--text-white);
-            font-weight: 400;
-        }
-
-        .stat-label {
-            font-size: 0.7rem;
-            color: var(--text-grey);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            font-weight: 500;
-        }
-
-        /* --- МИНИМАЛИСТИЧНЫЙ СПИСОК ФУНКЦИЙ --- */
-        .features-list-container {
-            border-top: 1px solid var(--border-line);
-            padding-top: 40px;
-        }
-
-        .section-heading {
-            font-family: var(--font-serif);
-            font-size: 1.8rem;
-            font-style: italic;
-            margin-bottom: 30px;
-            font-weight: 400;
-        }
-
-        .grid-features {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-        }
-
-        .feature-category h3 {
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--text-grey);
-            margin-bottom: 16px;
-            font-weight: 600;
-        }
-
-        .feature-item {
+        .forum-section-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 14px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.85);
+            margin-bottom: 30px;
         }
 
-        .feature-item:last-child { border-bottom: none; }
-
-        .status-text {
-            font-size: 0.75rem;
-            color: var(--text-grey);
-            font-style: italic;
+        .forum-section-title {
             font-family: var(--font-serif);
-        }
-
-        /* --- МИНИМАЛИСТИЧНЫЙ ЛОГ / ТЕРМИНАЛ --- */
-        .terminal-minimal {
-            border-top: 1px solid var(--border-line);
-            padding-top: 40px;
-            max-width: 600px;
-        }
-
-        .terminal-line {
-            font-size: 0.85rem;
-            line-height: 1.8;
-            color: var(--text-grey);
+            font-size: 2.4rem;
+            font-style: italic;
             font-weight: 300;
         }
 
-        .terminal-line span {
-            color: var(--text-white);
+        /* СПИСОК ТЕМ */
+        .threads-list { display: flex; flex-direction: column; gap: 12px; }
+
+        .thread-row {
+            display: grid;
+            grid-template-columns: 1fr 100px 180px;
+            align-items: center;
+            padding: 24px 30px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-weak);
+            border-radius: 16px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+        }
+        .thread-row:hover {
+            border-color: var(--border-strong);
+            background: rgba(255, 255, 255, 0.02);
+            transform: translateX(4px);
         }
 
-        @media(max-width: 768px) {
+        .thread-info { display: flex; flex-direction: column; gap: 6px; }
+        .thread-title { font-size: 1.05rem; font-weight: 500; color: var(--text-white); }
+        .thread-meta { display: flex; align-items: center; gap: 12px; font-size: 0.8rem; color: var(--text-grey-dark); }
+        .author-tag { color: var(--text-grey-light); font-weight: 500; }
+        
+        .monochrome-badge {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            color: var(--text-white);
+            background: rgba(255, 255, 255, 0.04);
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .thread-stats { font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-grey-light); text-align: center; }
+        .thread-last-post { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; font-size: 0.8rem; color: var(--text-grey-dark); }
+        .last-post-author { color: var(--text-white); }
+
+        /* --- СТРАНИЦА ПРОСМОТРА ТЕМЫ (THREAD VIEW) --- */
+        .thread-view-container { display: none; animation: stageEnter 0.4s ease forwards; }
+        .thread-view-container.active { display: block; }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-grey-light);
+            font-size: 0.9rem;
+            text-decoration: none;
+            margin-bottom: 30px;
+            cursor: pointer;
+        }
+        .back-link:hover { color: var(--text-white); }
+
+        .posts-stack { display: flex; flex-direction: column; gap: 20px; margin-bottom: 40px; }
+        
+        .post-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-weak);
+            border-radius: 16px;
+            display: grid;
+            grid-template-columns: 200px 1fr;
+        }
+
+        .post-sidebar {
+            padding: 30px;
+            border-right: 1px solid var(--border-weak);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            text-align: center;
+        }
+
+        .post-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #111;
+            border: 1px solid var(--border-strong);
+        }
+
+        .post-author-name { font-weight: 600; font-size: 0.95rem; }
+        
+        .post-body { padding: 30px; display: flex; flex-direction: column; justify-content: space-between; }
+        .post-text { font-size: 0.95rem; line-height: 1.7; color: var(--text-grey-light); }
+        
+        .post-code-block {
+            background: #000;
+            font-family: var(--font-mono);
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin-top: 15px;
+            border: 1px solid var(--border-weak);
+            color: #ccc;
+            overflow-x: auto;
+        }
+
+        .post-meta-footer {
+            margin-top: 24px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255,255,255,0.02);
+            font-size: 0.8rem;
+            color: var(--text-grey-dark);
+        }
+
+        /* ФОРМА ОТВЕТА */
+        .reply-box-wrapper {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid var(--border-weak);
+            border-radius: 16px;
+            padding: 30px;
+        }
+        .reply-box-title { font-size: 1.1rem; margin-bottom: 15px; font-weight: 500; }
+        .reply-textarea {
+            width: 100%;
+            height: 140px;
+            background: #000;
+            border: 1px solid var(--border-weak);
+            border-radius: 8px;
+            padding: 16px;
+            color: #fff;
+            font-family: var(--font-sans);
+            font-size: 0.95rem;
+            resize: none;
+            margin-bottom: 15px;
+        }
+        .reply-textarea:focus { border-color: var(--border-strong); outline: none; }
+
+        /* --- БОКОВАЯ ПАНЕЛЬ --- */
+        .forum-sidebar { display: flex; flex-direction: column; gap: 30px; }
+        .sidebar-widget { background: rgba(255, 255, 255, 0.01); border: 1px solid var(--border-weak); border-radius: 16px; padding: 24px; }
+        .widget-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-grey-dark); margin-bottom: 20px; font-weight: 600; }
+        
+        .live-stats-flex { display: flex; flex-direction: column; gap: 16px; }
+        .live-stat-item { display: flex; justify-content: space-between; align-items: center; }
+        .live-stat-label { font-size: 0.85rem; color: var(--text-grey-light); }
+        .live-stat-value { font-family: var(--font-mono); font-size: 1.1rem; font-weight: 300; }
+
+        .activity-feed { display: flex; flex-direction: column; gap: 16px; }
+        .feed-item { display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.02); }
+        .feed-title { color: var(--text-grey-light); text-decoration: none; }
+
+        /* --- МОДАЛЬНОЕ ОКНО СОЗДАНИЯ ТЕМЫ --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-card {
+            background: #0b0b0d;
+            border: 1px solid var(--border-strong);
+            width: 600px;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+        }
+        .modal-title { font-family: var(--font-serif); font-size: 2rem; font-style: italic; margin-bottom: 25px; }
+        .form-group { margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px; }
+        .form-group label { font-size: 0.8rem; color: var(--text-grey-light); text-transform: uppercase; letter-spacing: 0.05em; }
+        .form-input, .form-select {
+            background: #000; border: 1px solid var(--border-weak); border-radius: 8px; padding: 12px; color: #fff; font-size: 0.95rem;
+        }
+        .form-input:focus, .form-select:focus { border-color: var(--border-strong); outline: none; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 30px; }
+
+        @media(max-width: 1200px) {
+            .layout { padding: 40px 30px; }
+            .forum-grid { grid-template-columns: 1fr; }
+            .forum-sidebar { display: grid; grid-template-columns: 1fr 1fr; }
+        }
+
+        @media(max-width: 800px) {
             header { display: flex; flex-direction: column; gap: 24px; }
-            .hero-title { font-size: 2.8rem; }
-            .grid-stats { grid-template-columns: 1fr 1fr; gap: 30px; }
-            .grid-features { grid-template-columns: 1fr; }
+            .thread-row { grid-template-columns: 1fr; gap: 16px; }
+            .post-card { grid-template-columns: 1fr; }
+            .post-sidebar { border-right: none; border-bottom: 1px solid var(--border-weak); flex-direction: row; }
+            .forum-sidebar { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -267,93 +378,196 @@
         <!-- HEADER -->
         <header>
             <div class="logo-container">
-                <a href="#" class="logo-text">overflame</a>
+                <a href="#" class="logo-text" onclick="window.location.reload()">overflame</a>
             </div>
             
             <div class="tabs-container">
                 <div class="tabs-nav" id="navBar">
                     <div class="sliding-bg" id="fluidIndicator"></div>
-                    <button class="tab-trigger active" onclick="switchTab(this, 'main-dashboard')">Dashboard</button>
-                    <button class="tab-trigger" onclick="switchTab(this, 'modules-dashboard')">Features</button>
-                    <button class="tab-trigger" onclick="switchTab(this, 'beta-dashboard')">Beta Panel</button>
+                    <button class="tab-trigger active" onclick="switchTab(this, 'all-discussions')">Discussions</button>
+                    <button class="tab-trigger" onclick="switchTab(this, 'modules-forum')">Modules & LUA</button>
+                    <button class="tab-trigger" onclick="switchTab(this, 'beta-bugs')">Beta Tracker</button>
                 </div>
             </div>
 
-            <div class="header-spacer"></div>
+            <div class="header-spacer">
+                <button class="btn-primary" onclick="openModal()">+ New Thread</button>
+            </div>
         </header>
 
-        <!-- ТАБ 1: ГЛАВНЫЙ ДАШБОРД -->
-        <main id="main-dashboard" class="page-content active">
-            <h1 class="hero-title">the script is<br>the beginning.</h1>
-            <p class="hero-description">
-                Rage aimbot, anti-aim builder, peek assist, visuals, and defensive systems — connected to a cloud preset engine. Engineered for seamless competition, live server discovery, and advanced optimization for <strong>neverlose.cc</strong> and <strong>gamesense.pub</strong>.
-            </p>
+        <!-- ГЛАВНАЯ СЕТКА ФОРУМА -->
+        <div class="forum-grid">
+            
+            <!-- ОСНОВНОЙ КОНТЕНТНЫЙ БЛОК -->
+            <main class="forum-content-area">
+                
+                <!-- ОБЛАСТЬ СПИСКОВ ТЕМ (ПЕРЕКЛЮЧАЕТСЯ ТАБАМИ) -->
+                <div id="forum-lists-wrapper">
+                    
+                    <!-- ТАБ 1: DISCUSSION -->
+                    <div id="all-discussions" class="page-content active">
+                        <div class="forum-section-header">
+                            <h2 class="forum-section-title">General Discussions</h2>
+                        </div>
+                        <div class="threads-list">
+                            <div class="thread-row" onclick="viewThread('Welcome to Overflame V2 Global Stack', 'announcement', 'system', '2 hours ago', 'We are glad to introduce the new fluid monochrome dashboard stack engine. Optimizations are now live.')">
+                                <div class="thread-info">
+                                    <span class="thread-title">Welcome to Overflame V2 Global Stack</span>
+                                    <div class="thread-meta">
+                                        <span class="monochrome-badge">announcement</span>
+                                        <span>by <span class="author-tag">system</span></span>
+                                        <span>• 2 hours ago</span>
+                                    </div>
+                                </div>
+                                <div class="thread-stats">15 replies</div>
+                                <div class="thread-last-post"><span class="last-post-author">jake_x</span><span>5 mins ago</span></div>
+                            </div>
 
-            <div class="grid-stats">
-                <div class="stat-card">
-                    <span class="stat-num" id="stat-total">0</span>
-                    <span class="stat-label">Total Hours</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-num" id="stat-session">0</span>
-                    <span class="stat-label">Session Mins</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-num" id="stat-killed">0</span>
-                    <span class="stat-label">Killed Assets</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-num" id="stat-evaded">0</span>
-                    <span class="stat-label">Evaded Ties</span>
-                </div>
-            </div>
-        </main>
-
-        <!-- ТАБ 2: ФУНКЦИИ (ЧИСТАЯ СЕТКА БЕЗ СУРОВЫХ КАРТОЧЕК) -->
-        <div id="modules-dashboard" class="page-content">
-            <div class="features-list-container">
-                <h2 class="section-heading">Core Systems</h2>
-                <div class="grid-features">
-                    <div class="feature-category">
-                        <h3>Anti-Aimbot Core</h3>
-                        <div class="feature-item"><span>Adaptive Anti-Brute Steps</span><span class="status-text">active</span></div>
-                        <div class="feature-item"><span>Manual Desync Overrides</span><span class="status-text">active</span></div>
-                        <div class="feature-item"><span>Fake Lag Limiter Matrix</span><span class="status-text">active</span></div>
-                        <div class="feature-item"><span>Defensive Hidden Yaw</span><span class="status-text">active</span></div>
+                            <div class="thread-row" onclick="viewThread('How to optimize your Anti-Aim builder matrix', 'guide', 'overmind', 'Yesterday', 'To maximize performance on gamesense server architectures, you should mirror your desync bounds via local variables.', true)">
+                                <div class="thread-info">
+                                    <span class="thread-title">How to optimize your Anti-Aim builder matrix</span>
+                                    <div class="thread-meta">
+                                        <span class="monochrome-badge">guide</span>
+                                        <span>by <span class="author-tag">overmind</span></span>
+                                        <span>• Yesterday</span>
+                                    </div>
+                                </div>
+                                <div class="thread-stats">42 replies</div>
+                                <div class="thread-last-post"><span class="last-post-author">desync_god</span><span>1 hour ago</span></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="feature-category">
-                        <h3>Visual Overlay</h3>
-                        <div class="feature-item"><span>LWM Structural Info Boxes</span><span class="status-text">active</span></div>
-                        <div class="feature-item"><span>XOR Base64 Encryption</span><span class="status-text">active</span></div>
-                        <div class="feature-item"><span>Automated Event Engine</span><span class="status-text">active</span></div>
-                        <div class="feature-item"><span>Dynamic Crosshair Overlay</span><span class="status-text">active</span></div>
+
+                    <!-- ТАБ 2: LUA -->
+                    <div id="modules-forum" class="page-content">
+                        <div class="forum-section-header">
+                            <h2 class="forum-section-title">LWM & API Extensions</h2>
+                        </div>
+                        <div class="threads-list">
+                            <div class="thread-row" onclick="viewThread('[Release] Adaptive Anti-Brute Steps v1.4', 'lua', 'coder_prime', '12 hours ago', 'New public build release with stability fixed inside target selector arrays.')">
+                                <div class="thread-info">
+                                    <span class="thread-title">[Release] Adaptive Anti-Brute Steps algorithm tweak v1.4</span>
+                                    <div class="thread-meta">
+                                        <span class="monochrome-badge">lua</span>
+                                        <span>by <span class="author-tag">coder_prime</span></span>
+                                        <span>• 12 hours ago</span>
+                                    </div>
+                                </div>
+                                <div class="thread-stats">8 replies</div>
+                                <div class="thread-last-post"><span class="last-post-author">glitch</span><span>12 mins ago</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ТАБ 3: BETA -->
+                    <div id="beta-bugs" class="page-content">
+                        <div class="forum-section-header">
+                            <h2 class="forum-section-title">Beta Environment / Issues</h2>
+                        </div>
+                        <div class="threads-list">
+                            <div class="thread-row" onclick="viewThread('Defensive Hidden Yaw desync value mismatch', 'bug', 'beta_tester_1', '4 hours ago', 'Encountered extreme desync stutter values when executing rapid peek toggles.')">
+                                <div class="thread-info">
+                                    <span class="thread-title">Defensive Hidden Yaw desync value mismatch during rapid peek assist</span>
+                                    <div class="thread-meta">
+                                        <span class="monochrome-badge">open bug</span>
+                                        <span>by <span class="author-tag">beta_tester_1</span></span>
+                                        <span>• 4 hours ago</span>
+                                    </div>
+                                </div>
+                                <div class="thread-stats">1 reply</div>
+                                <div class="thread-last-post"><span class="last-post-author">core_dev</span><span>1 min ago</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ДИНАМИЧЕСКИЙ ПРОСМОТР КОНКРЕТНОЙ ТЕМЫ (ПО УМОЛЧАНИЮ СКРЫТ) -->
+                <div id="thread-view" class="thread-view-container">
+                    <div class="back-link" onclick="closeThreadView()">← back to index</div>
+                    <h2 class="forum-section-title" id="opened-thread-title">Thread Title</h2>
+                    
+                    <div class="posts-stack" id="posts-stack-output">
+                        <!-- Посты генерируются скриптом динамически -->
+                    </div>
+
+                    <!-- ФОРМА ОТВЕТА ВНУТРИ ТЕМЫ -->
+                    <div class="reply-box-wrapper">
+                        <h3 class="reply-box-title">Post a Reply</h3>
+                        <textarea class="reply-textarea" id="replyText" placeholder="Write your response... Use clean markdown structures..."></textarea>
+                        <button class="btn-primary" onclick="submitReply()">Submit Reply</button>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- ТАБ 3: BETA PANEL -->
-        <div id="beta-dashboard" class="page-content">
-            <div class="terminal-minimal">
-                <h2 class="section-heading">System Terminal</h2>
-                <div class="terminal-line"><span>[core]</span> Initializing Overflame Engine verification... 74%</div>
-                <div class="terminal-line"><span>[cloud]</span> Fetching cloud configurations from Realtime DB...</div>
-                <div class="terminal-line"><span>[status]</span> Handshake verified successfully. Developer Build Active.</div>
-            </div>
-        </div>
+            </main>
 
+            <!-- БОКОВАЯ ПАНЕЛЬ -->
+            <aside class="forum-sidebar">
+                <div class="sidebar-widget">
+                    <h3 class="widget-title">Live Node Network</h3>
+                    <div class="live-stats-flex">
+                        <div class="live-stat-item"><span class="live-stat-label">Online Nodes</span><span class="live-stat-value">1,402</span></div>
+                        <div class="live-stat-item"><span class="live-stat-label">Total Threads</span><span class="live-stat-value">28,911</span></div>
+                        <div class="live-stat-item"><span class="live-stat-label">Database Status</span><span class="live-stat-value" style="color: #fff; font-weight: bold;">STABLE</span></div>
+                    </div>
+                </div>
+
+                <div class="sidebar-widget">
+                    <h3 class="widget-title">Recent Activity</h3>
+                    <div class="activity-feed">
+                        <div class="feed-item">
+                            <span class="feed-title">New LWM Structural layout patch notes</span>
+                            <span class="feed-user">by admin • 3 mins ago</span>
+                        </div>
+                        <div class="feed-item">
+                            <span class="feed-title">Automated Event Engine broken config files</span>
+                            <span class="feed-user">by user909 • 14 mins ago</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+        </div>
     </div>
 
-    <!-- --- JAVASCRIPT (ПОЛНОСТЬЮ СОХРАНЕН) --- -->
+    <!-- ОКНО СОЗДАНИЯ ТЕМЫ -->
+    <div class="modal-overlay" id="newThreadModal">
+        <div class="modal-card">
+            <h3 class="modal-title">Create New Thread</h3>
+            <div class="form-group">
+                <label>Thread Title</label>
+                <input type="text" id="modalTitle" class="form-input" placeholder="Title of your discussion...">
+            </div>
+            <div class="form-group">
+                <label>Category</label>
+                <select id="modalCategory" class="form-select">
+                    <option value="all-discussions">General Discussions</option>
+                    <option value="modules-forum">Modules & LUA</option>
+                    <option value="beta-bugs">Beta Tracker</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>First Post Message</label>
+                <textarea id="modalMessage" class="reply-textarea" style="height: 100px;" placeholder="Describe your topic details..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn-primary" onclick="submitNewThread()">Create Topic</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- --- ЛОГИКА И СХЕМЫ ФОРУМА --- -->
     <script>
         const indicator = document.getElementById('fluidIndicator');
 
         function moveIndicator(button) {
             indicator.style.width = `${button.offsetWidth}px`;
-            indicator.style.transform = `translateX(${button.offsetLeft - 4}px)`;
+            indicator.style.transform = `translateX(${button.offsetLeft - 5}px)`;
         }
 
         function switchTab(button, targetId) {
+            closeThreadView();
             const contents = document.querySelectorAll('.page-content');
             contents.forEach(item => item.classList.remove('active'));
 
@@ -371,25 +585,104 @@
             if(activeTab) moveIndicator(activeTab);
         });
 
-        const FIREBASE_URL = "https://your-project-id-default-rtdb.firebaseio.com/stats.json";
+        /* СИСТЕМА ДИНАМИЧЕСКИХ СТРАНИЦ ТЕМ */
+        function viewThread(title, badge, author, time, mainText, includeCode = false) {
+            document.getElementById('forum-lists-wrapper').style.display = 'none';
+            const viewContainer = document.getElementById('thread-view');
+            viewContainer.classList.add('active');
+            
+            document.getElementById('opened-thread-title').innerText = title;
 
-        function updateUI(data) {
-            if(!data) return;
-            document.getElementById('stat-total').innerText   = data.total_hrs || 0;
-            document.getElementById('stat-session').innerText = data.session_mins || 0;
-            document.getElementById('stat-killed').innerText  = data.killed || 0;
-            document.getElementById('stat-evaded').innerText  = data.evaded || 0;
+            let codeSnippet = includeCode ? `
+                <div class="post-code-block">
+local current_desync = menu.get("anti-aim", "desync_bounds")\nif current_desync > 58 then\n    menu.set("anti-aim", "yaw_modifier", -22)\nend
+                </div>
+            ` : '';
+
+            const stack = document.getElementById('posts-stack-output');
+            stack.innerHTML = `
+                <div class="post-card">
+                    <div class="post-sidebar">
+                        <div class="post-avatar"></div>
+                        <span class="post-author-name">${author}</span>
+                        <span class="monochrome-badge" style="background: rgba(255,255,255,0.1);">${badge}</span>
+                    </div>
+                    <div class="post-body">
+                        <p class="post-text">${mainText}</p>
+                        ${codeSnippet}
+                        <div class="post-meta-footer">Posted ${time} • Verified Security Node</div>
+                    </div>
+                </div>
+            `;
         }
 
-        function pullData() {
-            fetch(FIREBASE_URL)
-                .then(res => res.json())
-                .then(data => updateUI(data))
-                .catch(() => {});
+        function closeThreadView() {
+            document.getElementById('thread-view').classList.remove('active');
+            document.getElementById('forum-lists-wrapper').style.display = 'block';
         }
 
-        setInterval(pullData, 2500);
-        pullData();
+        function submitReply() {
+            const txt = document.getElementById('replyText').value;
+            if(!txt.trim()) return;
+
+            const stack = document.getElementById('posts-stack-output');
+            const newPost = document.createElement('div');
+            newPost.className = 'post-card';
+            newPost.innerHTML = `
+                <div class="post-sidebar">
+                    <div class="post-avatar" style="background: #333;"></div>
+                    <span class="post-author-name">you (user)</span>
+                    <span class="monochrome-badge">Member</span>
+                </div>
+                <div class="post-body">
+                    <p class="post-text">${txt}</p>
+                    <div class="post-meta-footer">Just now • Web Sync</div>
+                </div>
+            `;
+            stack.appendChild(newPost);
+            document.getElementById('replyText').value = '';
+        }
+
+        /* МОДАЛЬНЫЕ ОКНА ДЛЯ СОЗДАНИЯ НОВЫХ ТЕМ */
+        function openModal() { document.getElementById('newThreadModal').classList.add('active'); }
+        function closeModal() { document.getElementById('newThreadModal').classList.remove('active'); }
+
+        function submitNewThread() {
+            const title = document.getElementById('modalTitle').value;
+            const category = document.getElementById('modalCategory').value;
+            const msg = document.getElementById('modalMessage').value;
+
+            if(!title.trim() || !msg.trim()) return;
+
+            const targetCategoryContainer = document.querySelector(`#${category} .threads-list`);
+            
+            const newRow = document.createElement('div');
+            newRow.className = 'thread-row';
+            newRow.onclick = function() { viewThread(title, 'User Thread', 'Authorized Node', 'Just now', msg); };
+            newRow.innerHTML = `
+                <div class="thread-info">
+                    <span class="thread-title">${title}</span>
+                    <div class="thread-meta">
+                        <span class="monochrome-badge">New Topic</span>
+                        <span>by <span class="author-tag">authorized_user</span></span>
+                        <span>• Just now</span>
+                    </div>
+                </div>
+                <div class="thread-stats">0 replies</div>
+                <div class="thread-last-post"><span class="last-post-author">none</span><span>-</span></div>
+            `;
+
+            targetCategoryContainer.insertBefore(newRow, targetCategoryContainer.firstChild);
+            
+            // Сброс и закрытие
+            document.getElementById('modalTitle').value = '';
+            document.getElementById('modalMessage').value = '';
+            closeModal();
+            
+            // Переключаемся на нужную вкладку, чтобы увидеть созданную тему
+            const targetTrigger = document.querySelector(`button[onclick*='${category}']`);
+            if(targetTrigger) switchTab(targetTrigger, category);
+        }
     </script>
 </body>
 </html>
