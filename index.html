@@ -145,7 +145,6 @@ header { display: flex; align-items: center; justify-content: space-between; pad
 .search-input:focus { outline: none; border-color: var(--line-strong); background: var(--bg-hover); }
 .search-input::placeholder { color: var(--ink-3); }
 .sort-bar { display: flex; gap: 6px; margin-bottom: 16px; }
-.sort-bar { display: flex; gap: 6px; margin-bottom: 16px; }
 .sort-btn { font-family: var(--mono); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 5px 12px; border-radius: 6px; background: none; border: 1px solid transparent; color: var(--ink-3); cursor: pointer; transition: all 0.2s; }
 .sort-btn:hover { color: var(--ink-2); border-color: var(--line); }
 .sort-btn.active { background: var(--glass-bg); border-color: var(--line); color: var(--ink); }
@@ -232,7 +231,7 @@ header { display: flex; align-items: center; justify-content: space-between; pad
     <aside class="sidebar">
       <div class="widget">
         <div class="widget-label">Network Status</div>
-        <div class="stat-row"><span class="stat-label"><span class="online-dot"></span>Online</span><span class="stat-val online" id="stat-online">—</span></div>
+        <div class="stat-row"><span class="stat-label"><span class="online-dot"></span>Online</span><span class="stat-val online" id="stat-online">0</span></div>
         <div class="stat-row"><span class="stat-label">Total threads</span><span class="stat-val" id="stat-threads">—</span></div>
         <div class="stat-row"><span class="stat-label">Total replies</span><span class="stat-val" id="stat-replies">—</span></div>
         <div class="stat-row"><span class="stat-label">Database</span><span class="stat-val" style="color:#a8f0a8;font-size:0.75rem;letter-spacing:0.05em">FIREBASE LIVE</span></div>
@@ -245,7 +244,6 @@ header { display: flex; align-items: center; justify-content: space-between; pad
   </div>
 </div>
 
-<!-- NEW THREAD MODAL -->
 <div class="modal-overlay" id="newThreadModal">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('newThreadModal')">×</button>
@@ -298,7 +296,6 @@ header { display: flex; align-items: center; justify-content: space-between; pad
   </div>
 </div>
 
-<!-- AUTH MODAL -->
 <div class="modal-overlay" id="authModal">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('authModal')">×</button>
@@ -317,12 +314,10 @@ header { display: flex; align-items: center; justify-content: space-between; pad
 
 <div class="toast-container" id="toastContainer"></div>
 
-<!-- FIREBASE SCRIPTS CORE & DATABASE -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, set, push, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, set, push, onValue, update, onDisconnect } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-// Конфигурация из твоего личного проекта overflame-website
 const firebaseConfig = {
   apiKey: "AIzaSyCbHZIX2_dvGi6ZZaqyYnN_jh-OHDK32u8",
   authDomain: "overflame-website.firebaseapp.com",
@@ -334,11 +329,9 @@ const firebaseConfig = {
   measurementId: "G-R3STBD0JCJ"
 };
 
-// Инициализация
 const app = initializeApp(firebaseConfig);
 const rtdb = getDatabase(app);
 
-// Локальное состояние приложения
 let threadsData = []; 
 let currentUser = localStorage.getItem('overflame_user') || null;
 let currentTab = 'general';
@@ -346,9 +339,7 @@ let currentThreadId = null;
 let searchFilterQuery = '';
 let sortModes = { general: 'newest', lua: 'newest', bugs: 'newest' };
 let selectVals = { cat: 'general', tag: 'discussion' };
-const onlineBase = 1402;
 
-// Экспортируем функции в глобальную область видимости window для HTML inline-обработчиков (onclick)
 window.switchTab = switchTab;
 window.sortThreads = sortThreads;
 window.filterThreads = filterThreads;
@@ -366,7 +357,6 @@ window.toggleSelect = toggleSelect;
 window.selectOpt = selectOpt;
 window.openFeedThread = openFeedThread;
 
-// Помощники форматирования и генерации
 function timeAgo(ts) {
   const d = Date.now() - ts, m = Math.floor(d/60000), h = Math.floor(d/3600000), dy = Math.floor(d/86400000);
   if (m < 1) return 'just now'; if (m < 60) return `${m}m ago`; if (h < 24) return `${h}h ago`; return `${dy}d ago`;
@@ -388,7 +378,6 @@ function movePill(btn) {
   }
 }
 
-// Кастомные селекты модального окна
 function toggleSelect(name) {
   const btn = document.getElementById(`cs-${name}-btn`);
   const dd  = document.getElementById(`cs-${name}-dropdown`);
@@ -412,7 +401,6 @@ document.addEventListener('click', e => {
   }
 });
 
-// Интерфейс пользователя (Header)
 function renderAuthUI() {
   const el = document.getElementById('headerActions');
   if (currentUser) {
@@ -422,7 +410,6 @@ function renderAuthUI() {
   }
 }
 
-// Переключение табов категорий
 function switchTab(btn, tab) {
   closeThread(false);
   document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
@@ -434,16 +421,31 @@ function switchTab(btn, tab) {
   renderTab(tab);
 }
 
-// СЛУШАТЕЛЬ ДАННЫХ ИЗ FIREBASE REALTIME DATABASE (Срабатывает мгновенно при любых изменениях в БД)
+const connectedRef = ref(rtdb, '.info/connected');
+const onlineUsersRef = ref(rtdb, 'online_status');
+
+onValue(connectedRef, (snap) => {
+  if (snap.val() === true) {
+    const myStatusRef = push(onlineUsersRef);
+    onDisconnect(myStatusRef).remove();
+    set(myStatusRef, { ts: Date.now() });
+  }
+});
+
+onValue(onlineUsersRef, (snap) => {
+  const data = snap.val();
+  const count = data ? Object.keys(data).length : 0;
+  const el = document.getElementById('stat-online');
+  if (el) el.textContent = count.toLocaleString();
+});
+
 const threadsRef = ref(rtdb, 'threads');
 onValue(threadsRef, (snapshot) => {
   const data = snapshot.val();
   threadsData = [];
   if (data) {
-    // Преобразуем объект Firebase { id1: {}, id2: {} } в удобный массив
     Object.keys(data).forEach(key => {
       const thread = data[key];
-      // Обработка реплаев, если они пришли в виде объекта
       let repliesArray = [];
       if (thread.replies) {
         repliesArray = Object.keys(thread.replies).map(rKey => ({
@@ -458,11 +460,8 @@ onValue(threadsRef, (snapshot) => {
       });
     });
   }
-  
-  // Перерендер всего активного интерфейса
   renderAll();
   if (currentThreadId) {
-    // Обновляем открытую ветку, если в неё кто-то написал/лайкнул
     openThread(currentThreadId, false); 
   }
 });
@@ -476,12 +475,10 @@ function getThreads(cat) {
   return threadsData.filter(t => t.cat === cat); 
 }
 
-// Рендеринг списка тредов внутри таба
 function renderTab(cat) {
   const threads = getThreads(cat);
   let filtered = threads;
   
-  // Применение поисковой строки
   if (searchFilterQuery) {
     const lq = searchFilterQuery.toLowerCase();
     filtered = threads.filter(t => 
@@ -537,7 +534,6 @@ function filterThreads(cat, q) {
   renderTab(cat);
 }
 
-// Просмотр отдельного треда
 function openThread(id, scrollSmooth = true) {
   const thread = threadsData.find(t => t.id === id);
   if (!thread) return;
@@ -591,17 +587,14 @@ function goHome() {
   switchTab(btn, 'general');
 }
 
-// Добавление лайка в Firebase
 function likePost(replyId) {
   const thread = threadsData.find(t => t.id === currentThreadId);
   if (!thread) return;
   
   if (replyId === 'op') {
-    // Лайк ОП-поста (самого треда)
     const currentLikes = thread.likes || 0;
     update(ref(rtdb, `threads/${currentThreadId}`), { likes: currentLikes + 1 });
   } else {
-    // Лайк комментария
     const target = thread.replies.find(r => r.id === replyId);
     if (!target) return;
     const currentLikes = target.likes || 0;
@@ -610,7 +603,6 @@ function likePost(replyId) {
   toast('Liked.');
 }
 
-// Отправка реплая в Firebase
 function submitReply() {
   if (!currentUser) { openAuthModal(); return; }
   const textEl = document.getElementById('replyText');
@@ -636,7 +628,6 @@ function openNewThread() {
   openModal('newThreadModal');
 }
 
-// Отправка нового треда в Firebase
 function submitNewThread() {
   const title = document.getElementById('nt-title').value.trim();
   const cat   = selectVals.cat;
@@ -706,7 +697,6 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
 });
 
-// Обновление сайдбара и ленты активности на основе данных из Firebase
 function updateSidebar() {
   let totalReplies = 0;
   threadsData.forEach(t => {
@@ -716,7 +706,6 @@ function updateSidebar() {
   document.getElementById('stat-threads').textContent  = threadsData.length.toLocaleString();
   document.getElementById('stat-replies').textContent  = totalReplies.toLocaleString();
   
-  // Генерация недавней активности
   const recent = [...threadsData].sort((a,b) => {
     const la = a.replies && a.replies.length ? a.replies[a.replies.length-1].ts : a.ts;
     const lb = b.replies && b.replies.length ? b.replies[b.replies.length-1].ts : b.ts;
@@ -741,19 +730,10 @@ function openFeedThread(id) {
   openThread(id);
 }
 
-// Инициализация интерфейса при первой загрузке
 window.addEventListener('DOMContentLoaded', () => {
   const active = document.querySelector('.nav-tab.active');
   if (active) movePill(active);
   renderAuthUI();
-  
-  // Рандомайзер онлайн-статуса
-  setInterval(() => {
-    const el = document.getElementById('stat-online');
-    if (el) el.textContent = (onlineBase + Math.floor(Math.random()*60)).toLocaleString();
-  }, 8000);
-  const onlineEl = document.getElementById('stat-online');
-  if (onlineEl) onlineEl.textContent = (onlineBase + Math.floor(Math.random()*40)).toLocaleString();
 });
 </script>
 </body>
