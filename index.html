@@ -145,6 +145,7 @@ header { display: flex; align-items: center; justify-content: space-between; pad
 .search-input:focus { outline: none; border-color: var(--line-strong); background: var(--bg-hover); }
 .search-input::placeholder { color: var(--ink-3); }
 .sort-bar { display: flex; gap: 6px; margin-bottom: 16px; }
+.sort-bar { display: flex; gap: 6px; margin-bottom: 16px; }
 .sort-btn { font-family: var(--mono); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 5px 12px; border-radius: 6px; background: none; border: 1px solid transparent; color: var(--ink-3); cursor: pointer; transition: all 0.2s; }
 .sort-btn:hover { color: var(--ink-2); border-color: var(--line); }
 .sort-btn.active { background: var(--glass-bg); border-color: var(--line); color: var(--ink); }
@@ -234,7 +235,7 @@ header { display: flex; align-items: center; justify-content: space-between; pad
         <div class="stat-row"><span class="stat-label"><span class="online-dot"></span>Online</span><span class="stat-val online" id="stat-online">—</span></div>
         <div class="stat-row"><span class="stat-label">Total threads</span><span class="stat-val" id="stat-threads">—</span></div>
         <div class="stat-row"><span class="stat-label">Total replies</span><span class="stat-val" id="stat-replies">—</span></div>
-        <div class="stat-row"><span class="stat-label">Database</span><span class="stat-val" style="color:#a8f0a8;font-size:0.75rem;letter-spacing:0.05em">STABLE</span></div>
+        <div class="stat-row"><span class="stat-label">Database</span><span class="stat-val" style="color:#a8f0a8;font-size:0.75rem;letter-spacing:0.05em">FIREBASE LIVE</span></div>
       </div>
       <div class="widget">
         <div class="widget-label">Recent Activity</div>
@@ -316,26 +317,62 @@ header { display: flex; align-items: center; justify-content: space-between; pad
 
 <div class="toast-container" id="toastContainer"></div>
 
-<script>
-const DB_KEY = 'overflame_db_v5';
-function loadDB() { try { const r = localStorage.getItem(DB_KEY); if (r) return JSON.parse(r); } catch(e){} return null; }
-function saveDB(db) { try { localStorage.setItem(DB_KEY, JSON.stringify(db)); } catch(e){} }
-function getDB() { let db = loadDB(); if (!db) db = freshDB(); return db; }
-function freshDB() { const db = { threads: [], currentUser: null, stats: { onlineBase: 1402 } }; saveDB(db); return db; }
+<!-- FIREBASE SCRIPTS CORE & DATABASE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getDatabase, ref, set, push, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-let db = getDB();
+// Конфигурация из твоего личного проекта overflame-website
+const firebaseConfig = {
+  apiKey: "AIzaSyCbHZIX2_dvGi6ZZaqyYnN_jh-OHDK32u8",
+  authDomain: "overflame-website.firebaseapp.com",
+  databaseURL: "https://overflame-website-default-rtdb.firebaseio.com",
+  projectId: "overflame-website",
+  storageBucket: "overflame-website.appspot.com",
+  messagingSenderId: "799754080179",
+  appId: "1:799754080179:web:73ee1fd947cf22f00505c6",
+  measurementId: "G-R3STBD0JCJ"
+};
+
+// Инициализация
+const app = initializeApp(firebaseConfig);
+const rtdb = getDatabase(app);
+
+// Локальное состояние приложения
+let threadsData = []; 
+let currentUser = localStorage.getItem('overflame_user') || null;
 let currentTab = 'general';
 let currentThreadId = null;
+let searchFilterQuery = '';
 let sortModes = { general: 'newest', lua: 'newest', bugs: 'newest' };
 let selectVals = { cat: 'general', tag: 'discussion' };
+const onlineBase = 1402;
 
+// Экспортируем функции в глобальную область видимости window для HTML inline-обработчиков (onclick)
+window.switchTab = switchTab;
+window.sortThreads = sortThreads;
+window.filterThreads = filterThreads;
+window.openThread = openThread;
+window.closeThread = closeThread;
+window.goHome = goHome;
+window.likePost = likePost;
+window.submitReply = submitReply;
+window.openNewThread = openNewThread;
+window.submitNewThread = submitNewThread;
+window.openAuthModal = openAuthModal;
+window.doSignIn = doSignIn;
+window.closeModal = closeModal;
+window.toggleSelect = toggleSelect;
+window.selectOpt = selectOpt;
+window.openFeedThread = openFeedThread;
+
+// Помощники форматирования и генерации
 function timeAgo(ts) {
   const d = Date.now() - ts, m = Math.floor(d/60000), h = Math.floor(d/3600000), dy = Math.floor(d/86400000);
   if (m < 1) return 'just now'; if (m < 60) return `${m}m ago`; if (h < 24) return `${h}h ago`; return `${dy}d ago`;
 }
 function avatarLetter(n) { return (n||'?')[0].toUpperCase(); }
 function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function uid() { return Math.random().toString(36).slice(2,10); }
 
 function toast(msg) {
   const c = document.getElementById('toastContainer');
@@ -345,10 +382,13 @@ function toast(msg) {
 
 function movePill(btn) {
   const pill = document.getElementById('navPill');
-  pill.style.width = btn.offsetWidth + 'px';
-  pill.style.transform = `translateX(${btn.offsetLeft - 5}px)`;
+  if(pill && btn) {
+    pill.style.width = btn.offsetWidth + 'px';
+    pill.style.transform = `translateX(${btn.offsetLeft - 5}px)`;
+  }
 }
 
+// Кастомные селекты модального окна
 function toggleSelect(name) {
   const btn = document.getElementById(`cs-${name}-btn`);
   const dd  = document.getElementById(`cs-${name}-dropdown`);
@@ -372,22 +412,17 @@ document.addEventListener('click', e => {
   }
 });
 
+// Интерфейс пользователя (Header)
 function renderAuthUI() {
   const el = document.getElementById('headerActions');
-  if (db.currentUser) {
-    el.innerHTML = `<div class="user-chip" onclick="openAuthModal()" title="Change name / sign out"><div class="user-chip-avatar">${avatarLetter(db.currentUser)}</div><span class="user-chip-name">${escHtml(db.currentUser)}</span><span class="user-chip-signout">✕</span></div><button class="btn btn-white" onclick="openNewThread()">+ New thread</button>`;
+  if (currentUser) {
+    el.innerHTML = `<div class="user-chip" onclick="openAuthModal()" title="Change name / sign out"><div class="user-chip-avatar">${avatarLetter(currentUser)}</div><span class="user-chip-name">${escHtml(currentUser)}</span><span class="user-chip-signout">✕</span></div><button class="btn btn-white" onclick="openNewThread()">+ New thread</button>`;
   } else {
     el.innerHTML = `<button class="btn btn-ghost" onclick="openAuthModal()">Sign in</button><button class="btn btn-white" onclick="openNewThread()">+ New thread</button>`;
   }
 }
 
-window.addEventListener('load', () => {
-  const active = document.querySelector('.nav-tab.active');
-  if (active) movePill(active);
-  renderAuthUI();
-  renderAll();
-});
-
+// Переключение табов категорий
 function switchTab(btn, tab) {
   closeThread(false);
   document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
@@ -396,30 +431,100 @@ function switchTab(btn, tab) {
   document.getElementById('view-' + tab).classList.add('active');
   currentTab = tab;
   movePill(btn);
+  renderTab(tab);
 }
 
-function renderAll() { ['general','lua','bugs'].forEach(renderTab); updateSidebar(); }
-function getThreads(cat) { return db.threads.filter(t => t.cat === cat); }
+// СЛУШАТЕЛЬ ДАННЫХ ИЗ FIREBASE REALTIME DATABASE (Срабатывает мгновенно при любых изменениях в БД)
+const threadsRef = ref(rtdb, 'threads');
+onValue(threadsRef, (snapshot) => {
+  const data = snapshot.val();
+  threadsData = [];
+  if (data) {
+    // Преобразуем объект Firebase { id1: {}, id2: {} } в удобный массив
+    Object.keys(data).forEach(key => {
+      const thread = data[key];
+      // Обработка реплаев, если они пришли в виде объекта
+      let repliesArray = [];
+      if (thread.replies) {
+        repliesArray = Object.keys(thread.replies).map(rKey => ({
+          id: rKey,
+          ...thread.replies[rKey]
+        }));
+      }
+      threadsData.push({
+        id: key,
+        ...thread,
+        replies: repliesArray
+      });
+    });
+  }
+  
+  // Перерендер всего активного интерфейса
+  renderAll();
+  if (currentThreadId) {
+    // Обновляем открытую ветку, если в неё кто-то написал/лайкнул
+    openThread(currentThreadId, false); 
+  }
+});
 
+function renderAll() { 
+  ['general','lua','bugs'].forEach(renderTab); 
+  updateSidebar(); 
+}
+
+function getThreads(cat) { 
+  return threadsData.filter(t => t.cat === cat); 
+}
+
+// Рендеринг списка тредов внутри таба
 function renderTab(cat) {
   const threads = getThreads(cat);
-  const sorted  = sortList(threads, sortModes[cat]);
-  document.getElementById('count-' + cat).textContent = threads.length + ' thread' + (threads.length !== 1 ? 's' : '');
+  let filtered = threads;
+  
+  // Применение поисковой строки
+  if (searchFilterQuery) {
+    const lq = searchFilterQuery.toLowerCase();
+    filtered = threads.filter(t => 
+      t.title.toLowerCase().includes(lq) || 
+      t.author.toLowerCase().includes(lq) || 
+      t.tag.toLowerCase().includes(lq)
+    );
+  }
+
+  const sorted = sortList(filtered, sortModes[cat]);
+  const countEl = document.getElementById('count-' + cat);
+  if (countEl) countEl.textContent = threads.length + ' thread' + (threads.length !== 1 ? 's' : '');
+  
   const el = document.getElementById('list-' + cat);
-  if (sorted.length === 0) { el.innerHTML = `<div class="empty-state"><span class="empty-icon">∅</span>No threads yet. Be the first.</div>`; return; }
+  if (!el) return;
+  
+  if (sorted.length === 0) { 
+    if (searchFilterQuery) {
+      el.innerHTML = `<div class="empty-state"><span class="empty-icon">∅</span>No results for "${escHtml(searchFilterQuery)}"</div>`;
+    } else {
+      el.innerHTML = `<div class="empty-state"><span class="empty-icon">∅</span>No threads yet. Be the first.</div>`; 
+    }
+    return; 
+  }
   el.innerHTML = sorted.map(renderThreadCard).join('');
 }
 
 function renderThreadCard(t) {
-  const last = t.replies.length ? t.replies[t.replies.length-1] : null;
-  return `<div class="thread-card${t.pinned?' pinned':''}" onclick="openThread('${t.id}')"><div class="thread-main"><div class="thread-title-row">${t.pinned?'<span class="badge pin">pinned</span>':''}<span class="thread-title">${escHtml(t.title)}</span><span class="badge">${escHtml(t.tag)}</span></div><div class="thread-sub"><span class="author">${escHtml(t.author)}</span><span>·</span><span>${timeAgo(t.ts)}</span></div></div><div class="thread-replies">${t.replies.length}<span>replies</span></div><div class="thread-last">${last?`<span class="last-user">${escHtml(last.author)}</span><span>${timeAgo(last.ts)}</span>`:'<span style="color:var(--ink-3)">—</span>'}</div></div>`;
+  const last = t.replies && t.replies.length ? t.replies[t.replies.length-1] : null;
+  const replyCount = t.replies ? t.replies.length : 0;
+  return `<div class="thread-card${t.pinned?' pinned':''}" onclick="openThread('${t.id}')"><div class="thread-main"><div class="thread-title-row">${t.pinned?'<span class="badge pin">pinned</span>':''}<span class="thread-title">${escHtml(t.title)}</span><span class="badge">${escHtml(t.tag)}</span></div><div class="thread-sub"><span class="author">${escHtml(t.author)}</span><span>·</span><span>${timeAgo(t.ts)}</span></div></div><div class="thread-replies">${replyCount}<span>replies</span></div><div class="thread-last">${last?`<span class="last-user">${escHtml(last.author)}</span><span>${timeAgo(last.ts)}</span>`:'<span style="color:var(--ink-3)">—</span>'}</div></div>`;
 }
 
 function sortList(threads, mode) {
   const pins = threads.filter(t => t.pinned);
-  const rest = [...threads.filter(t => !t.pinned)].sort((a,b) => mode==='newest' ? b.ts-a.ts : b.replies.length-a.replies.length);
+  const rest = [...threads.filter(t => !t.pinned)].sort((a,b) => {
+    const aReplies = a.replies ? a.replies.length : 0;
+    const bReplies = b.replies ? b.replies.length : 0;
+    return mode==='newest' ? b.ts-a.ts : bReplies-aReplies;
+  });
   return [...pins, ...rest];
 }
+
 function sortThreads(cat, mode, btn) {
   sortModes[cat] = mode;
   btn.closest('.sort-bar').querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
@@ -428,27 +533,37 @@ function sortThreads(cat, mode, btn) {
 }
 
 function filterThreads(cat, q) {
-  const lq = q.toLowerCase();
-  const threads = getThreads(cat);
-  const filtered = q ? sortList(threads.filter(t => t.title.toLowerCase().includes(lq)||t.author.toLowerCase().includes(lq)||t.tag.toLowerCase().includes(lq)), sortModes[cat]) : sortList(threads, sortModes[cat]);
-  const el = document.getElementById('list-' + cat);
-  el.innerHTML = filtered.length ? filtered.map(renderThreadCard).join('') : `<div class="empty-state"><span class="empty-icon">∅</span>No results for "${escHtml(q)}"</div>`;
+  searchFilterQuery = q;
+  renderTab(cat);
 }
 
-function openThread(id) {
-  const thread = db.threads.find(t => t.id === id);
+// Просмотр отдельного треда
+function openThread(id, scrollSmooth = true) {
+  const thread = threadsData.find(t => t.id === id);
   if (!thread) return;
   currentThreadId = id;
+  
   document.getElementById('threadListsWrapper').style.display = 'none';
   const tv = document.getElementById('threadView');
   tv.style.display = 'block';
-  tv.style.animation = 'none';
-  requestAnimationFrame(() => { tv.style.animation = ''; tv.style.animation = 'fadeUp 0.35s cubic-bezier(0.16,1,0.3,1) forwards'; });
+  
+  if (scrollSmooth) {
+    tv.style.animation = 'none';
+    requestAnimationFrame(() => { tv.style.animation = ''; tv.style.animation = 'fadeUp 0.35s cubic-bezier(0.16,1,0.3,1) forwards'; });
+  }
+  
   document.getElementById('tvTitle').textContent = thread.title;
   const pl = document.getElementById('postsList');
-  pl.innerHTML = [renderPost({ id: 'op', author: thread.author, ts: thread.ts, body: thread.body, likes: 0, isOP: true }), ...thread.replies.map(r => renderPost(r))].join('');
+  
+  const opPostHtml = renderPost({ id: 'op', author: thread.author, ts: thread.ts, body: thread.body, likes: thread.likes || 0, isOP: true });
+  const repliesHtml = thread.replies ? thread.replies.map(r => renderPost(r)).join('') : '';
+  
+  pl.innerHTML = opPostHtml + repliesHtml;
   renderReplyBox();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  
+  if (scrollSmooth) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 }
 
 function renderPost(r) {
@@ -457,8 +572,8 @@ function renderPost(r) {
 
 function renderReplyBox() {
   const inner = document.getElementById('replyBoxInner');
-  if (db.currentUser) {
-    inner.innerHTML = `<div class="reply-who">Replying as <span>${escHtml(db.currentUser)}</span></div><textarea class="reply-textarea" id="replyText" placeholder="Write your reply…"></textarea><div class="reply-row-actions"><span class="reply-hint">Plain text. Be respectful.</span><button class="btn btn-white" onclick="submitReply()">Post reply</button></div>`;
+  if (currentUser) {
+    inner.innerHTML = `<div class="reply-who">Replying as <span>${escHtml(currentUser)}</span></div><textarea class="reply-textarea" id="replyText" placeholder="Write your reply…"></textarea><div class="reply-row-actions"><span class="reply-hint">Plain text. Be respectful.</span><button class="btn btn-white" onclick="submitReply()">Post reply</button></div>`;
   } else {
     inner.innerHTML = `<div class="reply-login-prompt">You need to <a onclick="openAuthModal()">sign in</a> to post a reply.</div>`;
   }
@@ -476,44 +591,52 @@ function goHome() {
   switchTab(btn, 'general');
 }
 
+// Добавление лайка в Firebase
 function likePost(replyId) {
-  const thread = db.threads.find(t => t.id === currentThreadId);
+  const thread = threadsData.find(t => t.id === currentThreadId);
   if (!thread) return;
-  const target = thread.replies.find(r => r.id === replyId);
-  if (!target) return;
-  target.likes = (target.likes||0) + 1;
-  saveDB(db);
-  const btn = document.querySelector(`#post-${replyId} .post-action-btn`);
-  if (btn) { btn.textContent = `↑ ${target.likes}`; btn.classList.add('liked'); }
+  
+  if (replyId === 'op') {
+    // Лайк ОП-поста (самого треда)
+    const currentLikes = thread.likes || 0;
+    update(ref(rtdb, `threads/${currentThreadId}`), { likes: currentLikes + 1 });
+  } else {
+    // Лайк комментария
+    const target = thread.replies.find(r => r.id === replyId);
+    if (!target) return;
+    const currentLikes = target.likes || 0;
+    update(ref(rtdb, `threads/${currentThreadId}/replies/${replyId}`), { likes: currentLikes + 1 });
+  }
+  toast('Liked.');
 }
 
+// Отправка реплая в Firebase
 function submitReply() {
-  if (!db.currentUser) { openAuthModal(); return; }
+  if (!currentUser) { openAuthModal(); return; }
   const textEl = document.getElementById('replyText');
   const body = textEl.value.trim();
   if (!body) { toast('Reply cannot be empty.'); return; }
-  const thread = db.threads.find(t => t.id === currentThreadId);
-  if (!thread) return;
-  const reply = { id: 'r'+uid(), author: db.currentUser, ts: Date.now(), body, likes: 0 };
-  thread.replies.push(reply);
-  saveDB(db);
-  const pl = document.getElementById('postsList');
-  const el = document.createElement('div');
-  el.innerHTML = renderPost(reply);
-  pl.appendChild(el.firstElementChild);
-  textEl.value = '';
-  updateSidebar();
-  renderTab(thread.cat);
-  const np = document.getElementById('post-'+reply.id);
-  if (np) np.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  toast('Reply posted.');
+  
+  const replyRef = push(ref(rtdb, `threads/${currentThreadId}/replies`));
+  const newReply = {
+    author: currentUser,
+    ts: Date.now(),
+    body: body,
+    likes: 0
+  };
+  
+  set(replyRef, newReply).then(() => {
+    textEl.value = '';
+    toast('Reply posted.');
+  }).catch(e => toast('Error posting reply.'));
 }
 
 function openNewThread() {
-  if (!db.currentUser) { openAuthModal(); toast('Sign in first to create a thread.'); return; }
+  if (!currentUser) { openAuthModal(); toast('Sign in first to create a thread.'); return; }
   openModal('newThreadModal');
 }
 
+// Отправка нового треда в Firebase
 function submitNewThread() {
   const title = document.getElementById('nt-title').value.trim();
   const cat   = selectVals.cat;
@@ -521,16 +644,28 @@ function submitNewThread() {
   const body  = document.getElementById('nt-body').value.trim();
   if (!title) { toast('Thread title is required.'); return; }
   if (!body)  { toast('First post body is required.'); return; }
-  const thread = { id: 't'+uid(), cat, tag, pinned: false, title, author: db.currentUser, ts: Date.now(), body, replies: [] };
-  db.threads.unshift(thread);
-  saveDB(db);
-  document.getElementById('nt-title').value = '';
-  document.getElementById('nt-body').value = '';
-  closeModal('newThreadModal');
-  const btn = document.querySelector(`[data-tab="${cat}"]`);
-  switchTab(btn, cat);
-  updateSidebar();
-  toast('Thread created.');
+  
+  const newThreadRef = push(ref(rtdb, 'threads'));
+  const newThread = {
+    cat,
+    tag,
+    pinned: false,
+    title,
+    author: currentUser,
+    ts: Date.now(),
+    body,
+    likes: 0
+  };
+  
+  set(newThreadRef, newThread).then(() => {
+    document.getElementById('nt-title').value = '';
+    document.getElementById('nt-body').value = '';
+    closeModal('newThreadModal');
+    
+    const btn = document.querySelector(`[data-tab="${cat}"]`);
+    switchTab(btn, cat);
+    toast('Thread created.');
+  }).catch(e => toast('Database writing error.'));
 }
 
 function openAuthModal() {
@@ -542,9 +677,19 @@ function openAuthModal() {
 function doSignIn() {
   const name = document.getElementById('auth-user').value.trim();
   if (!name) { toast('Enter a username.'); return; }
-  if (db.currentUser === name) { db.currentUser = null; saveDB(db); closeModal('authModal'); renderAuthUI(); if(currentThreadId) renderReplyBox(); toast('Signed out.'); return; }
-  db.currentUser = name;
-  saveDB(db);
+  
+  if (currentUser === name) { 
+    currentUser = null; 
+    localStorage.removeItem('overflame_user');
+    closeModal('authModal'); 
+    renderAuthUI(); 
+    if(currentThreadId) renderReplyBox(); 
+    toast('Signed out.'); 
+    return; 
+  }
+  
+  currentUser = name;
+  localStorage.setItem('overflame_user', name);
   closeModal('authModal');
   renderAuthUI();
   if (currentThreadId) renderReplyBox();
@@ -561,35 +706,55 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
 });
 
+// Обновление сайдбара и ленты активности на основе данных из Firebase
 function updateSidebar() {
-  document.getElementById('stat-online').textContent  = (db.stats.onlineBase + Math.floor(Math.random()*40)).toLocaleString();
-  document.getElementById('stat-threads').textContent  = db.threads.length.toLocaleString();
-  document.getElementById('stat-replies').textContent  = db.threads.reduce((s,t)=>s+t.replies.length,0).toLocaleString();
-  const recent = [...db.threads].sort((a,b) => {
-    const la = a.replies.length ? a.replies[a.replies.length-1].ts : a.ts;
-    const lb = b.replies.length ? b.replies[b.replies.length-1].ts : b.ts;
+  let totalReplies = 0;
+  threadsData.forEach(t => {
+    totalReplies += t.replies ? t.replies.length : 0;
+  });
+
+  document.getElementById('stat-threads').textContent  = threadsData.length.toLocaleString();
+  document.getElementById('stat-replies').textContent  = totalReplies.toLocaleString();
+  
+  // Генерация недавней активности
+  const recent = [...threadsData].sort((a,b) => {
+    const la = a.replies && a.replies.length ? a.replies[a.replies.length-1].ts : a.ts;
+    const lb = b.replies && b.replies.length ? b.replies[b.replies.length-1].ts : b.ts;
     return lb-la;
   }).slice(0,6);
+  
   const feedEl = document.getElementById('recentFeed');
+  if (!feedEl) return;
   if (!recent.length) { feedEl.innerHTML = `<div style="font-size:0.78rem;color:var(--ink-3)">No activity yet.</div>`; return; }
+  
   feedEl.innerHTML = recent.map(t => {
-    const last = t.replies.length ? t.replies[t.replies.length-1] : null;
+    const last = t.replies && t.replies.length ? t.replies[t.replies.length-1] : null;
     return `<div class="feed-item"><div class="feed-thread" onclick="openFeedThread('${t.id}')">${escHtml(t.title)}</div><div class="feed-meta">${last?`${escHtml(last.author)} · ${timeAgo(last.ts)}`:`${escHtml(t.author)} · ${timeAgo(t.ts)}`}</div></div>`;
   }).join('');
 }
 
 function openFeedThread(id) {
-  const t = db.threads.find(t => t.id === id);
+  const t = threadsData.find(t => t.id === id);
   if (!t) return;
   const btn = document.querySelector(`[data-tab="${t.cat}"]`);
   switchTab(btn, t.cat);
   openThread(id);
 }
 
-setInterval(() => {
-  const el = document.getElementById('stat-online');
-  if (el) el.textContent = (db.stats.onlineBase + Math.floor(Math.random()*60)).toLocaleString();
-}, 8000);
+// Инициализация интерфейса при первой загрузке
+window.addEventListener('DOMContentLoaded', () => {
+  const active = document.querySelector('.nav-tab.active');
+  if (active) movePill(active);
+  renderAuthUI();
+  
+  // Рандомайзер онлайн-статуса
+  setInterval(() => {
+    const el = document.getElementById('stat-online');
+    if (el) el.textContent = (onlineBase + Math.floor(Math.random()*60)).toLocaleString();
+  }, 8000);
+  const onlineEl = document.getElementById('stat-online');
+  if (onlineEl) onlineEl.textContent = (onlineBase + Math.floor(Math.random()*40)).toLocaleString();
+});
 </script>
 </body>
 </html>
