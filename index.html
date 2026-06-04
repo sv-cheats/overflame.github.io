@@ -47,7 +47,7 @@ header { display: flex; align-items: center; justify-content: space-between; pad
 .section-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 24px; }
 .section-title { font-family: var(--serif); font-size: 2.2rem; font-weight: 300; font-style: italic; letter-spacing: -0.03em; }
 .section-count { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-3); }
-.thread-list { display: flex; flex-direction: column; gap: 2px; }
+.thread-list { display: flex; flex-direction: column; gap: 12px; }
 .thread-card { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 24px; padding: 20px 24px; background: var(--glass-bg); border: 1px solid var(--line); border-radius: var(--r-md); cursor: pointer; transition: all 0.25s var(--ease-out); position: relative; overflow: hidden; }
 .thread-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent); opacity: 0; transition: opacity 0.25s; }
 .thread-card:hover { background: var(--bg-hover); border-color: var(--line-strong); transform: translateX(3px); }
